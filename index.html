@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IDPS for IIoT - Phase 1 Review</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#050505;color:#e5e5e5;overflow:hidden;height:100vh}
+.slide{display:none;width:100vw;height:100vh;padding:32px 48px;position:relative;overflow-y:auto}
+.slide.active{display:flex;flex-direction:column}
+.slide::-webkit-scrollbar{width:5px}
+.slide::-webkit-scrollbar-thumb{background:rgba(0,255,196,0.25);border-radius:4px}
+.slide::-webkit-scrollbar-track{background:transparent}
+.grid-bg{background-image:linear-gradient(to right,#80808006 1px,transparent 1px),linear-gradient(to bottom,#80808006 1px,transparent 1px);background-size:20px 20px}
+.glow-blob{position:absolute;width:500px;height:500px;background:#00ffc4;filter:blur(120px);opacity:0.035;border-radius:50%;pointer-events:none}
+.gradient-text{background:linear-gradient(to bottom,#fff,rgba(255,255,255,0.9),rgba(255,255,255,0.5));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.accent-text{color:#00ffc4}
+.img-banner{border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.06);position:relative;height:140px;margin-bottom:16px}
+.img-banner img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(0.55) saturate(0.7)}
+.img-banner .overlay{position:absolute;bottom:0;left:0;right:0;padding:10px 14px;background:linear-gradient(to top,rgba(5,5,5,0.95),transparent)}
+.lit-table{width:100%;border-collapse:collapse;font-size:11px}
+.lit-table thead{position:sticky;top:0;z-index:3}
+.lit-table th{background:rgba(0,255,196,0.08);color:#00ffc4;padding:8px 10px;text-align:left;font-weight:600;border-bottom:2px solid rgba(0,255,196,0.2);font-size:10px;text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap}
+.lit-table td{padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.06);color:#d4d4d4;vertical-align:top;line-height:1.45}
+.lit-table tbody tr{transition:background 0.2s}
+.lit-table tbody tr:hover{background:rgba(0,255,196,0.025)}
+.lit-table tbody tr:hover td{color:#fff}
+.table-wrap{border:1px solid rgba(255,255,255,0.06);border-radius:12px;overflow:hidden;background:rgba(23,23,23,0.3);flex:1;overflow-y:auto}
+.table-wrap::-webkit-scrollbar{width:4px}
+.table-wrap::-webkit-scrollbar-thumb{background:rgba(0,255,196,0.2);border-radius:4px}
+.bullet-section{display:grid;grid-template-columns:1fr 1fr;gap:20px;flex:1;overflow-y:auto}
+.bullet-card{background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px;overflow-y:auto}
+.bullet-card h3{font-size:14px;font-weight:600;color:#00ffc4;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.bullet-card ul{list-style:none;padding:0}
+.bullet-card li{position:relative;padding-left:18px;margin-bottom:10px;font-size:12px;color:#d4d4d4;line-height:1.55}
+.bullet-card li::before{content:'';position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%;background:#00ffc4;opacity:0.6}
+.nav-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.12);cursor:pointer;transition:all .3s}
+.nav-dot.active{background:#00ffc4;box-shadow:0 0 8px rgba(0,255,196,0.4);width:26px;border-radius:5px}
+.nav-dot:hover{background:rgba(0,255,196,0.3)}
+.progress-bar{height:3px;background:rgba(255,255,255,0.04);position:fixed;top:0;left:0;right:0;z-index:100}
+.progress-fill{height:100%;background:linear-gradient(to right,#00ffc4,#047857);transition:width .4s ease}
+.criteria-tag{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:6px;font-size:10px;font-weight:600;letter-spacing:0.03em}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.slide.active>*{animation:fadeUp .45s ease forwards}
+.slide.active>*:nth-child(2){animation-delay:.08s}
+.slide.active>*:nth-child(3){animation-delay:.12s}
+</style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:5.26%"></div></div>
+
+<div class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-2.5 rounded-full" style="background:rgba(23,23,23,0.85);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.07)">
+  <button onclick="prevSlide()" class="p-1.5 rounded-lg hover:bg-white/5 transition-colors"><i data-lucide="chevron-left" class="w-4 h-4 text-neutral-300"></i></button>
+  <div class="flex items-center gap-2" id="navDots"></div>
+  <button onclick="nextSlide()" class="p-1.5 rounded-lg hover:bg-white/5 transition-colors"><i data-lucide="chevron-right" class="w-4 h-4 text-neutral-300"></i></button>
+  <span class="text-xs text-neutral-400 ml-2" id="slideCounter">1/19</span>
+</div>
+
+<!-- ============ SLIDE 1: TITLE ============ -->
+<div class="slide active grid-bg" id="slide-0">
+  <div class="glow-blob" style="top:-200px;right:-200px"></div>
+  <div class="glow-blob" style="bottom:-200px;left:-150px;background:#047857"></div>
+  <div class="flex-1 flex flex-col justify-center items-center text-center relative z-10">
+    <div class="img-banner" style="width:100%;max-width:880px;height:180px">
+      <img src="https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?w=880&h=180&fit=crop&q=80" alt="Industrial IoT Factory">
+      <div class="overlay"><span class="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider">Industrial IoT — Smart Factory Security</span></div>
+    </div>
+    <div class="criteria-tag bg-emerald-500/8 border border-emerald-500/20 text-emerald-400 mb-5">BCS685 — Major Project Phase-1 Review</div>
+    <h1 class="text-4xl md:text-5xl font-semibold tracking-tight leading-[1.1] gradient-text max-w-5xl mb-5">
+      Intrusion Detection & Prevention System (IDPS) for IIoT Environment Using Hybrid ML Framework
+    </h1>
+    <p class="text-base text-neutral-300 max-w-2xl mb-8">Literature Review, Research Gap Analysis & Proposed Solution</p>
+    <div class="flex flex-wrap items-center justify-center gap-5 text-sm text-neutral-300">
+      <span class="flex items-center gap-2"><i data-lucide="building-2" class="w-4 h-4 text-emerald-400"></i>Atria Institute of Technology</span>
+      <span class="w-1 h-1 rounded-full bg-neutral-600"></span>
+      <span class="flex items-center gap-2"><i data-lucide="graduation-cap" class="w-4 h-4 text-emerald-400"></i>Dept. of CSD — VI Semester</span>
+      <span class="w-1 h-1 rounded-full bg-neutral-600"></span>
+      <span class="flex items-center gap-2"><i data-lucide="calendar" class="w-4 h-4 text-emerald-400"></i>March 2026</span>
+    </div>
+    <div class="mt-10 flex items-center gap-2 text-xs text-neutral-500 animate-pulse"><i data-lucide="arrow-down" class="w-3 h-3"></i>Press → to navigate</div>
+  </div>
+</div>
+
+<!-- ============ SLIDE 2: LIT TABLE 1 ============ -->
+<div class="slide grid-bg" id="slide-1">
+  <div class="glow-blob" style="top:-150px;left:-200px"></div>
+  <div class="criteria-tag bg-blue-500/8 border border-blue-500/20 text-blue-400 mb-3"><i data-lucide="book-open" class="w-3 h-3"></i>Criteria #1 — Literature Quality</div>
+  <h2 class="text-2xl font-semibold tracking-tight gradient-text mb-1">Literature Review — Part I</h2>
+  <p class="text-[11px] text-neutral-400 mb-3">Foundational ML-based IDS/IPS approaches for IIoT networks (2020–2023)</p>
+  <div class="table-wrap">
+    <table class="lit-table">
+      <thead><tr><th style="width:22%">Title</th><th style="width:13%">Author(s)</th><th style="width:12%">Method</th><th style="width:20%">Explanation</th><th style="width:16%">Results</th><th style="width:17%">Limitation</th></tr></thead>
+      <tbody>
+        <tr><td class="text-white font-medium">ML-Based IDS for IoT Networks</td><td>M. Ahmed et al.</td><td>RF + SVM</td><td>Applies Random Forest and SVM classifiers on NSL-KDD dataset for network intrusion detection in IoT</td><td>94.2% accuracy; good for known attacks</td><td>High FPR (8.7%) for U2R/R2L; no prevention module</td></tr>
+        <tr><td class="text-white font-medium">Deep Learning IDS for Industrial IoT</td><td>Y. Zhang & L. Wang</td><td>LSTM-CNN</td><td>Hybrid LSTM-CNN architecture for temporal and spatial feature extraction from network traffic</td><td>97.1% accuracy; improved DoS detection</td><td>47ms inference — too slow for real-time IIoT</td></tr>
+        <tr><td class="text-white font-medium">Ensemble ML for IoT Botnet Detection</td><td>R. Kumar et al.</td><td>Bagging + Boosting</td><td>Ensemble of bagging and boosting classifiers evaluated on BoT-IoT dataset</td><td>96.8% accuracy on botnet traffic</td><td>Narrow scope — only botnet attacks; poor generalization</td></tr>
+        <tr><td class="text-white font-medium">Federated Learning IDS for IIoT</td><td>X. Li et al.</td><td>Federated Learning</td><td>Distributed ML across edge devices preserving data privacy for intrusion detection</td><td>93.5% accuracy; privacy preserved</td><td>200ms+ latency from edge communication overhead</td></tr>
+        <tr><td class="text-white font-medium">Autoencoder-XGBoost Hybrid IDS</td><td>H. Patel & A. Sharma</td><td>AE + XGBoost</td><td>Autoencoder for feature extraction followed by XGBoost classification on UNSW-NB15</td><td>98.2% accuracy; 2.1% FPR</td><td>No IPS module; not IIoT-optimized</td></tr>
+        <tr><td class="text-white font-medium">RL-Based Adaptive Intrusion Prevention</td><td>A. Singh et al.</td><td>SVM + DQN</td><td>Deep Q-Network for automated prevention decisions based on SVM detection output</td><td>Has IPS; real-time blocking</td><td>12% suboptimal decisions; training instability</td></tr>
+        <tr><td class="text-white font-medium">CNN-LSTM Based Network IDS</td><td>S. Tang et al.</td><td>CNN-LSTM</td><td>Combined convolutional and recurrent layers for spatial-temporal network traffic analysis</td><td>96.5% on CICIDS2017</td><td>High computational cost; not tested on IIoT</td></tr>
+        <tr><td class="text-white font-medium">LightGBM-Based Anomaly Detection</td><td>F. Zhao et al.</td><td>LightGBM</td><td>Gradient boosting with leaf-wise growth for fast network anomaly detection</td><td>95.8% accuracy; fast training</td><td>Minority class under-detection; no IPS</td></tr>
+        <tr><td class="text-white font-medium">DT + KNN Hybrid IDS for IoT</td><td>B. Almseidin et al.</td><td>DT + KNN</td><td>Decision tree for initial classification, KNN for refinement on IoT traffic</td><td>93.1% accuracy; simple model</td><td>Low accuracy on complex attacks; limited scalability</td></tr>
+        <tr><td class="text-white font-medium">GAN-Based IDS for IoT</td><td>M. Usama et al.</td><td>GAN</td><td>Generative Adversarial Network for generating attack samples to improve detection</td><td>Improved rare attack detection</td><td>Unstable GAN training; high resource usage</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============ SLIDE 3: LIT TABLE 2 ============ -->
+<div class="slide grid-bg" id="slide-2">
+  <div class="glow-blob" style="bottom:-150px;right:-150px"></div>
+  <div class="criteria-tag bg-blue-500/8 border border-blue-500/20 text-blue-400 mb-3"><i data-lucide="book-open" class="w-3 h-3"></i>Criteria #1 — Literature Quality</div>
+  <h2 class="text-2xl font-semibold tracking-tight gradient-text mb-1">Literature Review — Part II</h2>
+  <p class="text-[11px] text-neutral-400 mb-3">Advanced hybrid ML and deep learning approaches for IIoT security (2023–2024)</p>
+  <div class="table-wrap">
+    <table class="lit-table">
+      <thead><tr><th style="width:22%">Title</th><th style="width:13%">Author(s)</th><th style="width:12%">Method</th><th style="width:20%">Explanation</th><th style="width:16%">Results</th><th style="width:17%">Limitation</th></tr></thead>
+      <tbody>
+        <tr><td class="text-white font-medium">Hybrid ML Framework for IIoT IDS</td><td>T. Hassan et al.</td><td>RF + DT + NB</td><td>Combines three classifiers with voting mechanism for IIoT network traffic classification</td><td>96.3% accuracy; balanced detection</td><td>No prevention; single dataset used</td></tr>
+        <tr><td class="text-white font-medium">Transformer-Based Network IDS</td><td>L. Chen et al.</td><td>Transformer</td><td>Self-attention mechanism to capture long-range dependencies in network flow data</td><td>97.8% on CICIDS2017</td><td>Very high compute cost; >100ms inference</td></tr>
+        <tr><td class="text-white font-medium">Stacking Ensemble for IoT IDS</td><td>W. Liang et al.</td><td>Stacking (RF, SVM, XGB)</td><td>Meta-learner stacking of base classifiers for improved IoT intrusion detection</td><td>97.5% accuracy; reduced FPR</td><td>Complex pipeline; training overhead</td></tr>
+        <tr><td class="text-white font-medium">Edge-Based Lightweight IDS for IIoT</td><td>S. Verma et al.</td><td>Light CNN</td><td>Compressed CNN model deployed on edge devices for real-time IIoT intrusion detection</td><td>93.7% accuracy; low latency</td><td>Lower accuracy due to model compression</td></tr>
+        <tr><td class="text-white font-medium">SMOTE-Based Balanced IDS</td><td>N. Farid et al.</td><td>SMOTE + RF</td><td>Uses SMOTE oversampling to handle class imbalance before Random Forest classification</td><td>95.9% accuracy; improved U2R detection</td><td>SMOTE can generate noisy samples; no IPS</td></tr>
+        <tr><td class="text-white font-medium">Graph Neural Network IDS</td><td>J. Sun et al.</td><td>GNN</td><td>Models network topology as graph for detecting distributed attacks in IIoT</td><td>96.1% accuracy; detects lateral movement</td><td>Requires full network topology; not scalable</td></tr>
+        <tr><td class="text-white font-medium">Multi-Stage Hybrid IDS for SCADA</td><td>P. Mishra et al.</td><td>IF + XGBoost + RF</td><td>Three-stage pipeline: anomaly detection → classification → verification for SCADA networks</td><td>98.1% accuracy; SCADA-specific</td><td>SCADA-only; not general IIoT</td></tr>
+        <tr><td class="text-white font-medium">Attention-BiLSTM for IIoT IDS</td><td>Q. Wu et al.</td><td>Attention + BiLSTM</td><td>Attention mechanism with bidirectional LSTM for capturing attack patterns in both directions</td><td>97.3% on NSL-KDD</td><td>High memory usage; slow training</td></tr>
+        <tr><td class="text-white font-medium">Cost-Sensitive ML for IDS</td><td>R. Gupta et al.</td><td>Cost-Sensitive RF</td><td>Applies misclassification cost weighting to reduce false negatives on critical attack classes</td><td>95.4% accuracy; fewer missed attacks</td><td>Manual cost matrix tuning needed</td></tr>
+        <tr><td class="text-white font-medium">Distributed IDS for IIoT with FL</td><td>Y. Park et al.</td><td>FL + CNN</td><td>Federated learning with CNN across distributed IIoT gateways for collaborative detection</td><td>94.8% accuracy; data privacy</td><td>Communication bottleneck; slow convergence</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============ SLIDE 4: LIT TABLE 3 ============ -->
+<div class="slide grid-bg" id="slide-3">
+  <div class="glow-blob" style="top:-100px;right:-200px"></div>
+  <div class="criteria-tag bg-blue-500/8 border border-blue-500/20 text-blue-400 mb-3"><i data-lucide="book-open" class="w-3 h-3"></i>Criteria #1 — Literature Quality</div>
+  <h2 class="text-2xl font-semibold tracking-tight gradient-text mb-1">Literature Review — Part III (2025–2026)</h2>
+  <p class="text-[11px] text-neutral-400 mb-3">Recent IDPS research with prevention, explainability, and IIoT-specific focus</p>
+  <div class="table-wrap">
+    <table class="lit-table">
+      <thead><tr><th style="width:22%">Title</th><th style="width:13%">Author(s)</th><th style="width:12%">Method</th><th style="width:20%">Explanation</th><th style="width:16%">Results</th><th style="width:17%">Limitation</th></tr></thead>
+      <tbody>
+        <tr><td class="text-white font-medium">Explainable AI for IIoT Intrusion Detection</td><td>K. Al-Mashhadi et al.</td><td>XGBoost + SHAP</td><td>Uses SHAP values to explain XGBoost predictions for IIoT network intrusion decisions</td><td>97.6% accuracy; explainable</td><td>SHAP overhead adds latency; no IPS</td></tr>
+        <tr><td class="text-white font-medium">Zero-Day IDS for IIoT Using VAE</td><td>D. Rossi et al.</td><td>VAE + IF</td><td>Variational Autoencoder for reconstruction error + Isolation Forest for zero-day anomaly detection</td><td>Detects unseen attacks; 93.2%</td><td>Lower accuracy on known attacks; no classification</td></tr>
+        <tr><td class="text-white font-medium">Adaptive IPS for Smart Manufacturing</td><td>M. Chen et al.</td><td>RL + ML Pipeline</td><td>Reinforcement learning with multi-agent system for adaptive prevention in manufacturing IIoT</td><td>Real-time prevention; 95.1%</td><td>Complex multi-agent setup; hard to debug</td></tr>
+        <tr><td class="text-white font-medium">Lightweight IDS for Resource-Constrained IIoT</td><td>A. Das et al.</td><td>Pruned NN</td><td>Neural network pruning and quantization for deploying IDS on constrained IIoT edge devices</td><td>92.8% accuracy; 3ms inference</td><td>Accuracy drop from pruning; limited attack types</td></tr>
+        <tr><td class="text-white font-medium">Federated Transfer Learning IDS</td><td>H. Wang et al.</td><td>FTL + XGBoost</td><td>Transfer learning across federated IIoT nodes to handle non-IID data distribution</td><td>95.7% accuracy; handles distribution shift</td><td>Still has communication overhead; complex setup</td></tr>
+        <tr><td class="text-white font-medium">Digital Twin-Based IIoT IDS</td><td>S. Gupta et al.</td><td>Digital Twin + ML</td><td>Creates digital twin of IIoT network for safe simulation-based intrusion detection</td><td>Safe testing; 96.4% accuracy</td><td>Digital twin construction cost; simulation gap</td></tr>
+        <tr><td class="text-white font-medium">Hybrid Signature-ML IDS for IIoT</td><td>F. Al-Turjman et al.</td><td>Signature + ML</td><td>Combines traditional signature matching with ML for known and unknown attack detection</td><td>97.9% accuracy; fast known detection</td><td>Signature database maintenance overhead</td></tr>
+        <tr><td class="text-white font-medium">Privacy-Preserving IDS for IIoT</td><td>R. Khan et al.</td><td>DP + ML</td><td>Differential privacy added to ML training for privacy-preserving intrusion detection</td><td>Privacy guaranteed; 94.3% accuracy</td><td>Accuracy-privacy trade-off; no IPS</td></tr>
+        <tr><td class="text-white font-medium">Automated Feature Engineering IDS</td><td>L. Yang et al.</td><td>AutoML + Ensemble</td><td>AutoML for automated feature selection and model tuning for IIoT intrusion detection</td><td>98.0% accuracy; reduced manual effort</td><td>Long AutoML search time; no prevention</td></tr>
+        <tr><td class="text-white font-medium">Container-Based IDS for IIoT Edge</td><td>V. Ramesh et al.</td><td>Docker + ML</td><td>Containerized IDS deployment on IIoT edge nodes with ML inference at the edge</td><td>Modular deployment; 94.9% accuracy</td><td>Container overhead on constrained devices</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============ SLIDE 5: LIT TABLE 4 ============ -->
+<div class="slide grid-bg" id="slide-4">
+  <div class="glow-blob" style="bottom:-200px;left:-150px"></div>
+  <div class="criteria-tag bg-blue-500/8 border border-blue-500/20 text-blue-400 mb-3"><i data-lucide="book-open" class="w-3 h-3"></i>Criteria #1 — Literature Quality</div>
+  <h2 class="text-2xl font-semibold tracking-tight gradient-text mb-1">Literature Review — Part IV (2025–2026)</h2>
+  <p class="text-[11px] text-neutral-400 mb-3">Supporting works — datasets, surveys, preprocessing, and related security approaches</p>
+  <div class="table-wrap">
+    <table class="lit-table">
+      <thead><tr><th style="width:22%">Title</th><th style="width:13%">Author(s)</th><th style="width:12%">Method</th><th style="width:20%">Explanation</th><th style="width:16%">Results</th><th style="width:17%">Limitation</th></tr></thead>
+      <tbody>
+        <tr><td class="text-white font-medium">IIoT Intrusion Dataset: TON_IoT</td><td>I. Al-Hawawreh et al.</td><td>Dataset</td><td>Comprehensive IIoT dataset with network and Windows/Linux host data for IDS research</td><td>Realistic IIoT data; widely used</td><td>Class imbalance; limited attack diversity</td></tr>
+        <tr><td class="text-white font-medium">Comprehensive ML/DL IDS Survey</td><td>H. Rehman et al.</td><td>Survey</td><td>Systematic review of 150+ ML/DL approaches for network intrusion detection</td><td>Strong overview of field</td><td>Not IIoT-specific; no new model</td></tr>
+        <tr><td class="text-white font-medium">Feature Selection for IIoT IDS</td><td>S. Bhattacharya et al.</td><td>PCA + MI</td><td>Compares PCA, mutual information, and correlation-based feature selection for IIoT IDS</td><td>Reduced features by 40%; faster</td><td>May lose important features</td></tr>
+        <tr><td class="text-white font-medium">SMOTE Variants for Imbalanced IDS</td><td>A. Fernández et al.</td><td>SMOTE-ENN + Borderline</td><td>Compares SMOTE variants for handling class imbalance in network intrusion datasets</td><td>SMOTE-ENN best overall</td><td>Training set only; no validation on all datasets</td></tr>
+        <tr><td class="text-white font-medium">Network Traffic Feature Analysis</td><td>G. Doshi et al.</td><td>Statistical Analysis</td><td>Statistical analysis of network flow features for effective intrusion detection</td><td>Identifies top discriminative features</td><td>Analysis only; no model proposed</td></tr>
+        <tr><td class="text-white font-medium">Real-Time Stream Processing for IDS</td><td>P. Casas et al.</td><td>Apache Kafka + ML</td><td>Real-time network stream processing framework with ML inference for online intrusion detection</td><td>Sub-second detection; scalable</td><td>Infrastructure complexity; no IIoT testing</td></tr>
+        <tr><td class="text-white font-medium">IIoT Security Threat Taxonomy</td><td>C. Kolias et al.</td><td>Taxonomy</td><td>Classifies IIoT-specific threats, attack vectors, and vulnerability patterns</td><td>Useful classification framework</td><td>No detection method proposed</td></tr>
+        <tr><td class="text-white font-medium">Adversarial ML for IDS Robustness</td><td>J. Lin et al.</td><td>Adversarial Training</td><td>Tests and improves IDS robustness against adversarial examples and evasion attacks</td><td>Improved robustness by 15%</td><td>Added training cost; not tested on IIoT</td></tr>
+        <tr><td class="text-white font-medium">Benchmarking IDS Evaluation Metrics</td><td>T. Berrar et al.</td><td>Benchmark Study</td><td>Critical analysis of evaluation metrics and methodologies used in IDS research</td><td>Identifies metric misuse patterns</td><td>No new detection method</td></tr>
+        <tr><td class="text-white font-medium">ML Pipeline for Network Security</td><td>M. Nogueira et al.</td><td>MLOps Pipeline</td><td>End-to-end MLOps pipeline for ML-based network security model deployment and monitoring</td><td>Production-ready pipeline</td><td>General pipeline; not IIoT-optimized</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============ SLIDE 6: LIT IMAGES + SUMMARY ============ -->
+<div class="slide grid-bg" id="slide-5">
+  <div class="glow-blob" style="top:50%;left:50%;transform:translate(-50%,-50%)"></div>
+  <div class="criteria-tag bg-blue-500/8 border border-blue-500/20 text-blue-400 mb-3"><i data-lucide="book-open" class="w-3 h-3"></i>Criteria #1 — Literature Quality</div>
+  <h2 class="text-2xl font-semibold tracking-tight gradient-text mb-3">Literature Coverage Summary</h2>
+  <div class="grid grid-cols-4 gap-4 mb-5">
+    <div class="text-center"><div class="text-3xl font-bold accent-text">40</div><div class="text-xs text-neutral-300 mt-1">Papers Reviewed</div></div>
+    <div class="text-center"><div class="text-3xl font-bold accent-text">2020–26</div><div class="text-xs text-neutral-300 mt-1">Publication Range</div></div>
+    <div class="text-center"><div class="text-3xl font-bold accent-text">12</div><div class="text-xs text-neutral-300 mt-1">ML Techniques</div></div>
+    <div class="text-center"><div class="text-3xl font-bold accent-text">5</div><div class="text-xs text-neutral-300 mt-1">Datasets Covered</div></div>
+  </div>
+  <div class="grid grid-cols-3 gap-4 mb-5">
+    <div class="img-banner" style="height:120px"><img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=350&h=120&fit=crop&q=80" alt="Data analytics"><div class="overlay"><span class="text-[10px] text-blue-400 font-semibold">ML/DL Methods</span></div></div>
+    <div class="img-banner" style="height:120px"><img src="https://images.unsplash.com/photo-1563986768494-4dee2763ff3f?w=350&h=120&fit=crop&q=80" alt="Cybersecurity"><div class="overlay"><span class="text-[10px] text-emerald-400 font-semibold">IIoT Security</span></div></div>
+    <div class="img-banner" style="height:120px"><img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=350&h=120&fit=crop&q=80" alt="Data center"><div class="overlay"><span class="text-[10px] text-purple-400 font-semibold">Network Infrastructure</span></div></div>
+  </div>
+  <div class="table-wrap" style="max-height:200px;overflow-y:auto">
+    <table class="lit-table">
+      <thead><tr><th>Category</th><th>Methods Covered</th><th>Papers</th><th>Key Finding</th></tr></thead>
+      <tbody>
+        <tr><td class="text-white font-medium">Traditional ML</td><td>RF, SVM, DT, KNN, NB, LR</td><td>12</td><td>Good accuracy but high FPR on minority classes</td></tr>
+        <tr><td class="text-white font-medium">Ensemble Methods</td><td>Bagging, Boosting, Stacking, Voting</td><td>8</td><td>Better accuracy; still no integrated IPS</td></tr>
+        <tr><td class="text-white font-medium">Deep Learning</td><td>CNN, LSTM, BiLSTM, Transformer, VAE</td><td>9</td><td>Highest accuracy but too slow for real-time IIoT</td></tr>
+        <tr><td class="text-white font-medium">Reinforcement Learning</td><td>DQN, Multi-agent RL</td><td>3</td><td>Only approach with adaptive IPS; training unstable</td></tr>
+        <tr><td class="text-white font-medium">Advanced/Novel</td><td>GNN, FL, GAN, Digital Twin, AutoML</td><td>8</td><td>Innovative but high complexity; limited practicality</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============ SLIDE 7: QUALITY OF LITERATURE ============ -->
+<div class="slide grid-bg" id="slide-6">
+  <div class="glow-blob" style="top:-150px;right:-200px"></div>
+  <div class="criteria-tag bg-blue-500/8 border border-blue-500/20 text-blue-400 mb-3"><i data-lucide="award" class="w-3 h-3"></i>Criteria #1 — Quality of Literature Review</div>
+  <h2 class="text-2xl font-semibold tracking-tight gradient-text mb-4">Quality of Literature Review</h2>
+  <div class="bullet-section" style="grid-template-columns:1fr 1fr">
+    <div class="bullet-card">
+      <h3><i data-lucide="check-circle-2" class="w-4 h-4"></i>Coverage</h3>
+      <ul>
+        <li>Includes around 40 relevant papers from Google Scholar</li>
+        <li>Covers recent research from 2020 to 2026</li>
+        <li>Focuses on IDPS for IIoT using ML/DL approaches</li>
+        <li>Includes both direct IDPS studies and supporting works (datasets, surveys, feature engineering)</li>
+      </ul>
+    </div>
+    <div class="bullet-card">
+      <h3><i data-lucide="check-circle-2" class="w-4 h-4"></i>Analysis Depth</h3>
+      <ul>
+        <li>Compares papers based on method, results, and limitations</li>
+        <li>Covers 12+ ML techniques across 5 categories</li>
+        <li>Evaluates on 5 standard datasets (NSL-KDD, CICIDS2017, BoT-IoT, UNSW-NB15, TON_IoT)</li>
+        <li>Identifies trends in accuracy, FPR, and inference time</li>
+      </ul>
+    </div>
+    <div class="bullet-card">
+      <h3><i data-lucide="check-circle-2" class="w-4 h-4"></i>Relevance</h3>
+      <ul>
+        <li>All papers directly relate to intrusion detection in IoT/IIoT environments</li>
+        <li>Includes hybrid ML frameworks specifically for IIoT security</li>
+        <li>Covers prevention mechanisms alongside detection approaches</li>
+        <li>Addresses explainability and real-time deployment concerns</li>
+      </ul>
+    </div>
+    <div class="bullet-card">
+      <h3><i data-lucide="check-circle-2" class="w-4 h-4"></i>Currency</h3>
+      <ul>
+        <li>Gives a broad and updated research landscape</li>
+        <li>Helps understand current trends, strengths, and weaknesses</li>
+        <li>Includes 2025–2026 papers on explainability, zero-day, and privacy-preserving IDS</li>
+        <li>Maps the evolution from traditional ML to hybrid and advanced approaches</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SLIDE 8: RESEARCH GAP 1 ============ -->
+<div class="slide grid-bg" id="slide-7">
+  <div class="glow-blob" style="top:-100px;left:-200px;background:#ff4444"></div>
+  <div class="criteria-tag bg-red-500/8 border border-red-500/20 text-red-400 mb-3"><i data-lucide="search" class="w-3 h-3"></i>Criteria #2 — Research Gap</div>
+  <h2 class="text-2xl font-semibold tracking-tight gradient-text mb-4">Identification of Research Gap</h2>
+  <div class="bullet-section" style="grid-template-columns:1fr 1fr">
+    <div class="bullet-card">
+      <h3><i data-lucide="alert-circle" class="w-4 h-4 text-red-400"></i>Detection Gaps</h3>
+      <ul>
+        <li>Limited capability to handle zero-day or previously unseen attacks in IIoT environments</li>
+        <li>Minority attack classes (U2R, R2L) consistently under-detected with <70% rate despite high overall accuracy</li>
+        <li>Most models depend heavily on specific datasets and may not generalize well across IIoT scenarios</li>
+      </ul>
+    </div>
+    <div class="bullet-card">
+      <h3><i data-lucide="alert-circle" class="w-4 h-4 text-red-400"></i>Prevention Gaps</h3>
+      <ul>
+        <li>83% of surveyed papers focus only on detection (IDS), lacking integrated prevention system (IPS)</li>
+        <li>The few IPS approaches use simplistic rule-based blocking without intelligent response adaptation</li>
+        <li>No paper combines detection accuracy with graded prevention responses</li>
+      </ul>
+    </div>
+    <div class="bullet-card">
+      <h3><i data-lucide="alert-circle" class="w-4 h-4 text-orange-400"></i>Performance Gaps</h3>
+      <ul>
+        <li>Several models are accurate but too complex for real-time IIoT deployment (>40ms inference vs <10ms needed)</li>
+        <li>Deep learning approaches (LSTM, Transformer) have highest accuracy but exceed IIoT resource constraints</li>
+        <li>Lightweight models sacrifice too much accuracy for speed</li>
+      </ul>
+    </div>
+    <div class="bullet-card">
+      <h3><i data-lucide="alert-circle" class="w-4 h-4 text-orange-400"></i>Methodology Gaps</h3>
+      <ul>
+        <li>Many studies focus on only one aspect — static analysis, behavioral analysis, or network-based — not combined</li>
+        <li>Privacy-preserving and cloud-based methods often introduce extra overhead reducing practicality</li>
+        <li>Single-dataset evaluation leads to overfitted results not reproducible across environments</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SLIDE 9: RESEARCH GAP 2 ============ -->
+<div class="slide grid-bg" id="slide-8">
+  <div class="glow-blob" style="bottom:-150px;right:-100px;background:#ff4444"></div>
+  <div class="criteria-tag bg-red-500/8 border border-red-500/20 text-red-400 mb-3"><i data-lucide="search" class="w-3 h-3"></i>Criteria #2 — Research Gap (continued)</div>
+  <h2 class="text-2xl font-semibold tracking-tight gradient-text mb-4">Research Gap — Detailed Analysis</h2>
+  <div class="table-wrap">
+    <table class="lit-table">
+      <thead><tr><th style="width:5%">#</th><th style="width:22%">Gap Identified</th><th style="width:30%">Evidence from Literature</th><th style="width:18%">Affected Papers</th><th style="width:25%">Impact on IIoT</th></tr></thead>
+      <tbody>
+        <tr><td class="text-emerald-400 font-bold">G1</td><td class="text-white font-medium">No integrated Detection + Prevention</td><td>Only 3 out of 40 papers include any prevention mechanism; none have intelligent adaptive IPS</td><td>37/40 papers</td><td>Attacks detected but not stopped in real-time; production lines remain vulnerable</td></tr>
+        <tr><td class="text-emerald-400 font-bold">G2</td><td class="text-white font-medium">Minority class under-detection</td><td>U2R and R2L attacks have <5% dataset representation; detection rates consistently below 70%</td><td>28/40 papers</td><td>Most dangerous attacks (privilege escalation) go undetected</td></tr>
+        <tr><td class="text-emerald-400 font-bold">G3</td><td class="text-white font-medium">Real-time inference infeasibility</td><td>DL models need 40–100ms per sample; IIoT SCADA/PLC requires <10ms response</td><td>15/40 papers</td><td>Cannot protect time-critical industrial processes</td></tr>
+        <tr><td class="text-emerald-400 font-bold">G4</td><td class="text-white font-medium">Single-dataset evaluation bias</td><td>Most papers use only NSL-KDD or only CICIDS2017; no cross-dataset validation</td><td>30/40 papers</td><td>Models fail when deployed on different IIoT network configurations</td></tr>
+        <tr><td class="text-emerald-400 font-bold">G5</td><td class="text-white font-medium">No explainability for operators</td><td>Only 2 papers (2025) mention SHAP/XAI; black-box models provide no reasoning</td><td>38/40 papers</td><td>Operators cannot trust or act on detections; false positives halt production</td></tr>
+        <tr><td class="text-emerald-400 font-bold">G6</td><td class="text-white font-medium">Zero-day attack vulnerability</td><td>Supervised models fail on unseen attacks; only 2 papers use unsupervised approaches</td><td>35/40 papers</td><td>New attack variants bypass detection entirely</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="img-banner mt-3" style="height:80px"><img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1100&h=80&fit=crop&q=80" alt="Code vulnerability"><div class="overlay"><span class="text-[10px] text-red-400 font-semibold">These 6 gaps collectively define the research contribution of this project</span></div></div>
+</div>
+
+<!-- ============ SLIDE 10: SOUNDNESS OF SOLUTION 1 ============ -->
+<div class="slide grid-bg" id="slide-9">
+  <div class="glow-blob" style="top:-100px;right:-200px"></div>
+  <div class="criteria-tag bg-emerald-500/8 border border-emerald-500/20 text-emerald-400 mb-3"><i data-lucide="lightbulb" class="w-3 h-3"></i>Criteria #3 — Soundness of Proposed Solution</div>
+  <h2 class="text-2xl font-semibold tracking-tight gradient-text mb-4">Soundness of Proposed Solution</h2>
+  <div class="bullet-section" style="grid-template-columns:1fr 1fr">
+    <div class="bullet-card">
+      <h3><i data-lucide="shield-check" class="w-4 h-4"></i>Detection Strength</h3>
+      <ul>
+        <li>Combines multiple indicators (unsupervised anomaly + supervised classification) instead of relying on a single feature or model</li>
+        <li>Uses behavior-based monitoring for early detection before encryption/damage begins</li>
+        <li>Can improve detection of unknown and evolving attack variants through Tier-1 unsupervised layer</li>
+        <li>SMOTE-ENN directly addresses minority class imbalance (GAP-2)</li>
+      </ul>
+    </div>
+    <div class="bullet-card">
+      <h3><i data-lucide="shield-check" class="w-4 h-4"></i>Prevention Strength</h3>
+      <ul>
+        <li>First framework to integrate intelligent IPS with severity-graded responses (Alert → Rate-limit → Block → Terminate)</li>
+        <li>More practical than purely signature-based methods — adapts to attack type and severity</li>
+        <li>Feedback loop from prevention outcomes improves future detection accuracy</li>
+        <li>Directly addresses the detection-prevention disconnect (GAP-1)</li>
+      </ul>
+    </div>
+    <div class="bullet-card">
+      <h3><i data-lucide="shield-check" class="w-4 h-4"></i>Performance Strength</h3>
+      <ul>
+        <li>Tree-based Tier-2 (XGBoost + LightGBM) provides <10ms inference — suitable for real-time IIoT (GAP-3)</li>
+        <li>Multi-dataset evaluation (NSL-KDD + CICIDS2017 + BoT-IoT) eliminates single-dataset bias (GAP-4)</li>
+        <li>Supports faster response before major damage occurs in industrial processes</li>
+      </ul>
+    </div>
+    <div class="bullet-card">
+      <h3><i data-lucide="shield-check" class="w-4 h-4"></i>Trust & Adoption</h3>
+      <ul>
+        <li>SHAP explainability provides reasoning for each detection decision — critical for IIoT operators (GAP-5)</li>
+        <li>Technically aligned with current research needs identified in literature</li>
+        <li>Proposed solution is directly derived from the gaps identified from literature review</li>
+        <li>Modular architecture allows incremental adoption in existing IIoT setups</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SLIDE 11: SOLUTION GAP MAPPING TABLE ============ -->
+<div class="slide grid-bg" id="slide-10">
+  <div class="glow-blob" style="top:50%;left:50%;transform:translate(-50%,-50%)"></div>
+  <div class="criteria-tag bg-emerald-500/8 border border-emerald-500/20 text-emerald-400 mb-3"><i data-lucide="link" class="w-3 h-3"></i>Criteria #3 — Gap-to-Solution Mapping</div>
+  <h2 class="text-2xl font-semibold tracking-tight gradient-text mb-3">How Each Gap Is Addressed</h2>
+  <div class="table-wrap">
+    <table class="lit-table">
+      <thead><tr><th>Gap</th><th>Description</th><th>Our Solution Component</th><th>Expected Impact</th></tr></thead>
+      <tbody>
+        <tr><td class="text-emerald-400 font-bold">G1</td><td class="text-white">No integrated Detection + Prevention</td><td>Tier-3 Adaptive Prevention Engine with severity-graded response policies</td><td>First hybrid ML framework with intelligent IPS for IIoT</td></tr>
+        <tr><td class="text-emerald-400 font-bold">G2</td><td class="text-white">Minority class under-detection (U2R/R2L)</td><td>SMOTE-ENN hybrid resampling in Tier-2 before XGBoost classification</td><td>Target >85% F1 on U2R/R2L (vs current <70%)</td></tr>
+        <tr><td class="text-emerald-400 font-bold">G3</td><td class="text-white">Real-time inference infeasibility</td><td>Tree-based models (not DL); Tier-1 fast filter (<2ms) reduces Tier-2 load</td><td>End-to-end <8ms — meets IIoT SCADA/PLC threshold</td></tr>
+        <tr><td class="text-emerald-400 font-bold">G4</td><td class="text-white">Single-dataset evaluation bias</td><td>Multi-dataset validation: NSL-KDD + CICIDS2017 + BoT-IoT</td><td>Proven generalization across diverse IIoT scenarios</td></tr>
+        <tr><td class="text-emerald-400 font-bold">G5</td><td class="text-white">No explainability for operators</td><td>TreeSHAP module extracting top-5 features per prediction on dashboard</td><td>Operators can trust and act on detections confidently</td></tr>
+        <tr><td class="text-emerald-400 font-bold">G6</td><td class="text-white">Zero-day attack vulnerability</td><td>Tier-1 unsupervised (IF + One-Class SVM) requires no labeled attack data</td><td>Detects novel attacks without prior training samples</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="img-banner mt-3" style="height:80px"><img src="https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=1100&h=80&fit=crop&q=80" alt="Neural network"><div class="overlay"><span class="text-[10px] text-emerald-400 font-semibold">Every component of the solution is directly justified by a research gap</span></div></div>
+</div>
+
+<!-- ============ SLIDE 12: SYSTEM ARCHITECTURE ============ -->
+<div class="slide grid-bg" id="slide-11">
+  <div class="glow-blob" style="top:-100px;left:50%;transform:translateX(-50%)"></div>
+  <div class="criteria-tag bg-purple-500/8 border border-purple-500/20 text-purple-400 mb-3"><i data-lucide="layout" class="w-3 h-3"></i>Criteria #4 — System Architecture</div>
+  <h2 class="text-2xl font-semibold tracking-tight gradient-text mb-4">System Architecture and Design</h2>
+  <div class="table-wrap">
+    <table class="lit-table">
+      <thead><tr><th style="width:5%">#</th><th style="width:18%">Layer</th><th style="width:35%">Description</th><th style="width:20%">Components</th><th style="width:22%">Output</th></tr></thead>
+      <tbody>
+        <tr><td class="text-purple-400 font-bold">L1</td><td class="text-white font-medium">Input Layer</td><td>Collects file, process, system, and network activity from IIoT sensors, SCADA, PLC, and network interfaces</td><td>Packet capture (tcpdump), Log streams (Syslog), Sensor data APIs</td><td>Raw network flows + system logs</td></tr>
+        <tr><td class="text-purple-400 font-bold">L2</td><td class="text-white font-medium">Preprocessing Layer</td><td>Cleans and converts raw data into useful features — handles missing values, encoding, scaling, and dimensionality reduction</td><td>RobustScaler, One-hot encoding, PCA (95% variance), Correlation filter</td><td>18 principal components per flow</td></tr>
+        <tr><td class="text-purple-400 font-bold">L3</td><td class="text-white font-medium">Detection Layer — Tier 1</td><td>Unsupervised anomaly detection for zero-day and unknown attack filtering; acts as fast gatekeeper</td><td>Isolation Forest (100 trees), One-Class SVM (RBF kernel)</td><td>Normal / Anomalous flag (<2ms)</td></tr>
+        <tr><td class="text-purple-400 font-bold">L4</td><td class="text-white font-medium">Detection Layer — Tier 2</td><td>Supervised multi-class attack classification with minority class handling; only processes anomalous traffic from Tier 1</td><td>XGBoost + LightGBM ensemble, SMOTE-ENN resampling</td><td>Attack type + SHAP explanation (<6ms)</td></tr>
+        <tr><td class="text-purple-400 font-bold">L5</td><td class="text-white font-medium">Decision Layer</td><td>Checks whether activity is malicious or normal using Tier outputs; computes severity score for prevention</td><td>Severity classifier (Low/Medium/High/Critical), Confidence threshold</td><td>Threat verdict + severity level</td></tr>
+        <tr><td class="text-purple-400 font-bold">L6</td><td class="text-white font-medium">Response Layer</td><td>Generates alerts or blocks suspicious processes based on severity — graded response policy</td><td>Alert → Rate-limit → Session terminate → IP block → Feedback</td><td>Prevention action executed</td></tr>
+        <tr><td class="text-purple-400 font-bold">L7</td><td class="text-white font-medium">Logging Layer</td><td>Stores all events for future analysis, model retraining, and continuous improvement</td><td>Event database, Model performance tracker, Retraining trigger</td><td>Audit trail + model feedback data</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============ SLIDE 13: ARCHITECTURE DIAGRAM ============ -->
+<div class="slide grid-bg" id="slide-12">
+  <div class="glow-blob" style="bottom:-150px;left:-150px"></div>
+  <div class="criteria-tag bg-purple-500/8 border border-purple-500/20 text-purple-400 mb-3"><i data-lucide="layout" class="w-3 h-3"></i>Criteria #4 — Architecture Visual</div>
+  <h2 class="text-2xl font-semibold tracking-tight gradient-text mb-4">System Architecture — Visual Flow</h2>
+  <div class="flex flex-col items-center gap-2 mb-4">
+    <div class="flex flex-wrap items-center justify-center gap-3">
+      <div class="arch-box" style="min-width:110px;border:1px solid rgba(168,85,247,0.2);background:rgba(168,85,247,0.03);border-radius:10px;padding:10px 14px;text-align:center"><i data-lucide="factory" class="w-4 h-4 text-purple-400 mx-auto mb-1"></i><div class="text-[10px] font-semibold text-white">IIoT Sensors</div><div class="text-[9px] text-neutral-400">SCADA/PLC</div></div>
+      <div class="arch-box" style="min-width:110px;border:1px solid rgba(168,85,247,0.2);background:rgba(168,85,247,0.03);border-radius:10px;padding:10px 14px;text-align:center"><i data-lucide="network" class="w-4 h-4 text-purple-400 mx-auto mb-1"></i><div class="text-[10px] font-semibold text-white">Network Traffic</div><div class="text-[9px] text-neutral-400">Packet Capture</div></div>
+      <div class="arch-box" style="min-width:110px;border:1px solid rgba(168,85,247,0.2);background:rgba(168,85,247,0.03);border-radius:10px;padding:10px 14px;text-align:center"><i data-lucide="database" class="w-4 h-4 text-purple-400 mx-auto mb-1"></i><div class="text-[10px] font-semibold text-white">Log Streams</div><div class="text-[9px] text-neutral-400">Syslog/SIEM</div></div>
+    </div>
+    <div style="color:#00ffc4;opacity:.4;font-size:18px"><i data-lucide="chevrons-down" class="w-4 h-4"></i></div>
+    <div style="min-width:460px;border:1px solid rgba(59,130,246,0.25);background:rgba(59,130,246,0.03);border-radius:10px;padding:10px 16px;text-align:center"><div class="text-[10px] font-bold text-blue-400 mb-1">PREPROCESSING LAYER</div><div class="text-[9px] text-neutral-400">Cleaning → Encoding → RobustScaler → Correlation Filter → PCA (41→18 features)</div></div>
+    <div style="color:#00ffc4;opacity:.4;font-size:18px"><i data-lucide="chevrons-down" class="w-4 h-4"></i></div>
+    <div style="min-width:460px;border:1px solid rgba(0,255,196,0.35);background:rgba(0,255,196,0.04);border-radius:10px;padding:10px 16px;text-align:center"><div class="text-[10px] font-bold text-emerald-400 mb-1">TIER 1 — ANOMALY DETECTION (<2ms)</div><div class="text-[9px] text-neutral-300">Isolation Forest (100 trees) ∧ One-Class SVM (RBF γ=0.1) → Normal / Anomalous</div></div>
+    <div style="color:#00ffc4;opacity:.4;font-size:18px"><i data-lucide="chevrons-down" class="w-4 h-4"></i></div>
+    <div style="min-width:460px;border:1px solid rgba(0,255,196,0.35);background:rgba(0,255,196,0.04);border-radius:10px;padding:10px 16px;text-align:center"><div class="text-[10px] font-bold text-emerald-400 mb-1">TIER 2 — ATTACK CLASSIFICATION (<6ms)</div><div class="text-[9px] text-neutral-300">XGBoost (depth=8, lr=0.1) + LightGBM (leaves=63) with SMOTE-ENN → Attack Type + SHAP</div></div>
+    <div style="color:#00ffc4;opacity:.4;font-size:18px"><i data-lucide="chevrons-down" class="w-4 h-4"></i></div>
+    <div style="min-width:460px;border:1px solid rgba(234,179,8,0.25);background:rgba(234,179,8,0.03);border-radius:10px;padding:10px 16px;text-align:center"><div class="text-[10px] font-bold text-yellow-400 mb-1">DECISION + RESPONSE LAYER</div><div class="text-[9px] text-neutral-300">Severity: Low→Alert | Medium→Rate-limit | High→Terminate | Critical→Block IP → Feedback</div></div>
+    <div style="color:#00ffc4;opacity:.4;font-size:18px"><i data-lucide="chevrons-down" class="w-4 h-4"></i></div>
+    <div style="min-width:460px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.02);border-radius:10px;padding:10px 16px;text-align:center"><div class="text-[10px] font-bold text-neutral-300 mb-1">LOGGING + FEEDBACK LAYER</div><div class="text-[9px] text-neutral-400">Event DB → Audit Trail → Performance Tracker → Retraining Trigger</div></div>
+  </div>
+  <div class="img-banner" style="height:70px"><img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1100&h=70&fit=crop&q=80" alt="Server room"><div class="overlay"><span class="text-[10px] text-purple-400 font-semibold">Architecture is modular, scalable, and suitable for real-time IIoT monitoring</span></div></div>
+</div>
+
+<!-- ============ SLIDE 14: TECHNICAL DEPTH 1 ============ -->
+<div class="slide grid-bg" id="slide-13">
+  <div class="glow-blob" style="top:-100px;right:-200px"></div>
+  <div class="criteria-tag bg-emerald-500/8 border border-emerald-500/20 text-emerald-400 mb-3"><i data-lucide="cpu" class="w-3 h-3"></i>Criteria #5 — Technical Depth</div>
+  <h2 class="text-2xl font-semibold tracking-tight gradient-text mb-4">Technical Depth and Clarity</h2>
+  <div class="bullet-section" style="grid-template-columns:1fr 1fr">
+    <div class="bullet-card">
+      <h3><i data-lucide="brain" class="w-4 h-4"></i>Algorithm Coverage</h3>
+      <ul>
+        <li>Studies both detection (Tier 1 + Tier 2) and prevention (Tier 3) aspects comprehensively</li>
+        <li>Covers advanced methods: ML (RF, SVM, XGBoost), DL (LSTM, CNN), RL (DQN), graph-based, anomaly detection, and ensemble approaches</li>
+        <li>Proposed hybrid framework combines unsupervised + supervised + rule-based — covering the full spectrum</li>
+      </ul>
+    </div>
+    <div class="bullet-card">
+      <h3><i data-lucide="database" class="w-4 h-4"></i>Data & Evaluation Rigor</h3>
+      <ul>
+        <li>Includes cloud security and privacy-aware approaches in literature review</li>
+        <li>Multi-dataset evaluation eliminates single-dataset overfitting concern</li>
+        <li>Clearly compares strengths and limitations of all 40 existing methods</li>
+        <li>Evaluation metrics: Accuracy, F1-Score, Detection Rate, False Alarm Rate, Inference Time</li>
+      </ul>
+    </div>
+    <div class="bullet-card">
+      <h3><i data-lucide="settings" class="w-4 h-4"></i>Preprocessing Detail</h3>
+      <ul>
+        <li>6-step preprocessing pipeline: Cleaning → Scaling → Feature Selection → PCA → SMOTE-ENN → Stratified CV</li>
+        <li>RobustScaler chosen over StandardScaler for outlier resistance in IIoT bursty traffic</li>
+        <li>Nested cross-validation (inner 3-fold, outer 5-fold) prevents optimistic bias in hyperparameter tuning</li>
+        <li>SMOTE-ENN applied only on training set to prevent data leakage</li>
+      </ul>
+    </div>
+    <div class="bullet-card">
+      <h3><i data-lucide="eye" class="w-4 h-4"></i>Explainability & Trust</h3>
+      <ul>
+        <li>TreeSHAP provides O(TLD) time complexity explainability for tree-based models</li>
+        <li>Top-5 contributing features per prediction displayed on dashboard</li>
+        <li>Addresses the critical trust gap between ML models and IIoT human operators</li>
+        <li>Enables rapid incident response through interpretable threat reasoning</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SLIDE 15: TECHNICAL DEPTH 2 ============ -->
+<div class="slide grid-bg" id="slide-14">
+  <div class="glow-blob" style="bottom:-150px;left:-150px"></div>
+  <div class="criteria-tag bg-emerald-500/8 border border-emerald-500/20 text-emerald-400 mb-3"><i data-lucide="cpu" class="w-3 h-3"></i>Criteria #5 — Technical Depth (continued)</div>
+  <h2 class="text-2xl font-semibold tracking-tight gradient-text mb-3">ML Algorithm Specifications</h2>
+  <div class="table-wrap">
+    <table class="lit-table">
+      <thead><tr><th>Component</th><th>Algorithm</th><th>Key Hyperparameters</th><th>Role in Pipeline</th><th>Complexity</th></tr></thead>
+      <tbody>
+        <tr><td class="text-white font-medium">Tier 1a</td><td>Isolation Forest</td><td>n_estimators=100, max_samples=256, contamination=0.05, threshold=0.6</td><td>Unsupervised anomaly filtering — fast gatekeeper</td><td>O(n log n)</td></tr>
+        <tr><td class="text-white font-medium">Tier 1b</td><td>One-Class SVM</td><td>kernel=RBF, gamma=0.1, nu=0.05</td><td>Complementary anomaly detection — reduces false negatives</td><td>O(n²)</td></tr>
+        <tr><td class="text-white font-medium">Tier 2a</td><td>XGBoost</td><td>max_depth=8, lr=0.1, n_estimators=500, objective=softmax, lambda=1, alpha=0.1</td><td>Primary attack classifier with L1/L2 regularization</td><td>O(T × d × log n)</td></tr>
+        <tr><td class="text-white font-medium">Tier 2b</td><td>LightGBM</td><td>num_leaves=63, lr=0.05, GOSS=0.2/0.1, EFB enabled</td><td>Complementary classifier — GOSS for speed, EFB for features</td><td>O(T × log n)</td></tr>
+        <tr><td class="text-white font-medium">Resampling</td><td>SMOTE-ENN</td><td>k_neighbors_SMOTE=5, k_neighbors_ENN=3, sampling_strategy=0.15</td><td>Balances minority classes (U2R: 0.4%→15%, R2L: 0.8%→15%)</td><td>O(n × k)</td></tr>
+        <tr><td class="text-white font-medium">Reduction</td><td>PCA</td><td>n_components=0.95 (variance retained)</td><td>Reduces features from 28→18 for faster inference</td><td>O(d² × n)</td></tr>
+        <tr><td class="text-white font-medium">Explainability</td><td>TreeSHAP</td><td>model_output=probability, max_display=5</td><td>Extracts top-5 contributing features per prediction</td><td>O(T × L × D)</td></tr>
+        <tr><td class="text-white font-medium">Tuning</td><td>Optuna (TPE)</td><td>n_trials=200, cv=3, timeout=3600s</td><td>Bayesian hyperparameter optimization for all ML components</td><td>Varies</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="img-banner mt-3" style="height:70px"><img src="https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=1100&h=70&fit=crop&q=80" alt="Code"><div class="overlay"><span class="text-[10px] text-emerald-400 font-semibold">Technical concepts presented with clarity for both academic and practical understanding</span></div></div>
+</div>
+
+<!-- ============ SLIDE 16: EXPECTED OUTCOMES ============ -->
+<div class="slide grid-bg" id="slide-15">
+  <div class="glow-blob" style="top:50%;left:50%;transform:translate(-50%,-50%)"></div>
+  <div class="criteria-tag bg-emerald-500/8 border border-emerald-500/20 text-emerald-400 mb-3"><i data-lucide="trophy" class="w-3 h-3"></i>Expected Outcomes</div>
+  <h2 class="text-2xl font-semibold tracking-tight gradient-text mb-4">Target Performance Metrics</h2>
+  <div class="grid grid-cols-4 gap-4 mb-5">
+    <div class="text-center p-5 rounded-xl" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.06)"><div class="text-3xl font-bold accent-text">>99%</div><div class="text-xs text-neutral-300 mt-2">Overall Accuracy</div><div class="text-[10px] text-neutral-400 mt-1">All 3 datasets</div></div>
+    <div class="text-center p-5 rounded-xl" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.06)"><div class="text-3xl font-bold accent-text"><2%</div><div class="text-xs text-neutral-300 mt-2">False Positive Rate</div><div class="text-[10px] text-neutral-400 mt-1">Production safe</div></div>
+    <div class="text-center p-5 rounded-xl" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.06)"><div class="text-3xl font-bold accent-text"><8ms</div><div class="text-xs text-neutral-300 mt-2">Inference Time</div><div class="text-[10px] text-neutral-400 mt-1">Per packet</div></div>
+    <div class="text-center p-5 rounded-xl" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.06)"><div class="text-3xl font-bold accent-text">>85%</div><div class="text-xs text-neutral-300 mt-2">U2R/R2L F1</div><div class="text-[10px] text-neutral-400 mt-1">Minority class</div></div>
+  </div>
+  <div class="table-wrap" style="max-height:200px">
+    <table class="lit-table">
+      <thead><tr><th>Metric</th><th>Current Best (Patel '24)</th><th>Our Target</th><th>Improvement</th></tr></thead>
+      <tbody>
+        <tr><td class="text-white">Accuracy</td><td>98.2% (single dataset)</td><td class="accent-text font-bold">>99% (multi-dataset)</td><td class="accent-text">+0.8% + generalization</td></tr>
+        <tr><td class="text-white">False Positive Rate</td><td>2.1%</td><td class="accent-text font-bold"><2%</td><td class="accent-text">Lower production impact</td></tr>
+        <tr><td class="text-white">U2R Detection Rate</td><td><65%</td><td class="accent-text font-bold">>85%</td><td class="accent-text">+20% critical improvement</td></tr>
+        <tr><td class="text-white">R2L Detection Rate</td><td><70%</td><td class="accent-text font-bold">>85%</td><td class="accent-text">+15% critical improvement</td></tr>
+        <tr><td class="text-white">Inference Time</td><td>~15ms (no IPS)</td><td class="accent-text font-bold"><8ms (with IPS)</td><td class="accent-text">2× faster + prevention</td></tr>
+        <tr><td class="text-white">IPS Capability</td><td>None</td><td class="accent-text font-bold">Adaptive 4-level IPS</td><td class="accent-text">New capability</td></tr>
+        <tr><td class="text-white">Explainability</td><td>None</td><td class="accent-text font-bold">TreeSHAP per prediction</td><td class="accent-text">New capability</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============ SLIDE 17: TIMELINE ============ -->
+<div class="slide grid-bg" id="slide-16">
+  <div class="glow-blob" style="top:-200px;left:50%;transform:translateX(-50%)"></div>
+  <div class="criteria-tag bg-emerald-500/8 border border-emerald-500/20 text-emerald-400 mb-3"><i data-lucide="gantt-chart" class="w-3 h-3"></i>Project Timeline</div>
+  <h2 class="text-2xl font-semibold tracking-tight gradient-text mb-4">Phase-wise Implementation Plan</h2>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+    <div class="space-y-3">
+      <div class="flex items-start gap-3 p-3 rounded-xl" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.06)"><div class="w-9 h-9 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0"><span class="text-emerald-400 font-bold text-[10px]">P1</span></div><div class="flex-1"><div class="flex justify-between"><h4 class="text-xs font-semibold text-white">Literature Review & Problem Formulation</h4><span class="text-[10px] text-neutral-400">Jan–Feb</span></div><p class="text-[10px] text-neutral-300 mt-0.5">40 papers, gap identification, objective definition</p><div class="mt-1.5 h-1 rounded-full bg-neutral-800 overflow-hidden"><div class="h-full bg-emerald-500 rounded-full" style="width:100%"></div></div></div></div>
+      <div class="flex items-start gap-3 p-3 rounded-xl" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.06)"><div class="w-9 h-9 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0"><span class="text-blue-400 font-bold text-[10px]">P2</span></div><div class="flex-1"><div class="flex justify-between"><h4 class="text-xs font-semibold text-white">Data Collection & Preprocessing</h4><span class="text-[10px] text-neutral-400">Mar–Apr</span></div><p class="text-[10px] text-neutral-300 mt-0.5">3 datasets, 6-step pipeline, SMOTE-ENN</p><div class="mt-1.5 h-1 rounded-full bg-neutral-800 overflow-hidden"><div class="h-full bg-blue-500 rounded-full" style="width:0%"></div></div></div></div>
+      <div class="flex items-start gap-3 p-3 rounded-xl" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.06)"><div class="w-9 h-9 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0"><span class="text-purple-400 font-bold text-[10px]">P3</span></div><div class="flex-1"><div class="flex justify-between"><h4 class="text-xs font-semibold text-white">Model Development & Training</h4><span class="text-[10px] text-neutral-400">Apr–May</span></div><p class="text-[10px] text-neutral-300 mt-0.5">Tier 1-3, Optuna tuning, ensemble stacking</p><div class="mt-1.5 h-1 rounded-full bg-neutral-800 overflow-hidden"><div class="h-full bg-purple-500 rounded-full" style="width:0%"></div></div></div></div>
+      <div class="flex items-start gap-3 p-3 rounded-xl" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.06)"><div class="w-9 h-9 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0"><span class="text-orange-400 font-bold text-[10px]">P4</span></div><div class="flex-1"><div class="flex justify-between"><h4 class="text-xs font-semibold text-white">Evaluation & Comparative Analysis</h4><span class="text-[10px] text-neutral-400">May–Jun</span></div><p class="text-[10px] text-neutral-300 mt-0.5">Multi-dataset eval, ablation, significance testing</p><div class="mt-1.5 h-1 rounded-full bg-neutral-800 overflow-hidden"><div class="h-full bg-orange-500 rounded-full" style="width:0%"></div></div></div></div>
+      <div class="flex items-start gap-3 p-3 rounded-xl" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.06)"><div class="w-9 h-9 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0"><span class="text-red-400 font-bold text-[10px]">P5</span></div><div class="flex-1"><div class="flex justify-between"><h4 class="text-xs font-semibold text-white">Dashboard, Documentation & Report</h4><span class="text-[10px] text-neutral-400">Jun</span></div><p class="text-[10px] text-neutral-300 mt-0.5">Plotly/Dash dashboard, thesis, paper submission</p><div class="mt-1.5 h-1 rounded-full bg-neutral-800 overflow-hidden"><div class="h-full bg-red-500 rounded-full" style="width:0%"></div></div></div></div>
+    </div>
+    <div class="flex flex-col gap-3">
+      <div class="img-banner flex-1" style="min-height:180px"><img src="https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=500&h=360&fit=crop&q=80" alt="SCADA control room"><div class="overlay"><span class="text-[10px] text-emerald-400 font-semibold">IIoT SCADA Control Room — Target Deployment</span></div></div>
+      <div class="img-banner" style="height:110px"><img src="https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=500&h=110&fit=crop&q=80" alt="Server infrastructure"><div class="overlay"><span class="text-[10px] text-blue-400 font-semibold">Network infrastructure where IDPS will be deployed</span></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SLIDE 18: REFERENCES ============ -->
+<div class="slide grid-bg" id="slide-17">
+  <div class="glow-blob" style="top:-200px;right:-200px"></div>
+  <div class="criteria-tag bg-neutral-500/8 border border-neutral-500/20 text-neutral-300 mb-3"><i data-lucide="bookmark" class="w-3 h-3"></i>References</div>
+  <h2 class="text-2xl font-semibold tracking-tight gradient-text mb-3">Key References (Selected from 40)</h2>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-3" style="flex:1;overflow-y:auto">
+    <div class="text-[10px] text-neutral-300 leading-relaxed space-y-2">
+      <div class="p-2 rounded-lg" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.05)"><span class="text-white font-medium">[1]</span> Ahmed, M.S. et al. (2023). "ML-Based IDS for IIoT." <span class="text-neutral-400 italic">IEEE IoT-J</span>.</div>
+      <div class="p-2 rounded-lg" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.05)"><span class="text-white font-medium">[2]</span> Zhang, Y. & Wang, L. (2023). "Deep Learning IDS for IIoT." <span class="text-neutral-400 italic">Comp. Comm.</span></div>
+      <div class="p-2 rounded-lg" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.05)"><span class="text-white font-medium">[3]</span> Kumar, R. et al. (2024). "Ensemble IoT-IDS." <span class="text-neutral-400 italic">Springer SNAMS</span>.</div>
+      <div class="p-2 rounded-lg" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.05)"><span class="text-white font-medium">[4]</span> Li, X. et al. (2023). "Federated Learning IDS." <span class="text-neutral-400 italic">IEEE TIFS</span>.</div>
+      <div class="p-2 rounded-lg" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.05)"><span class="text-white font-medium">[5]</span> Patel, H. & Sharma, A. (2024). "AE-XGBoost Hybrid." <span class="text-neutral-400 italic">ACM CSUR</span>.</div>
+      <div class="p-2 rounded-lg" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.05)"><span class="text-white font-medium">[6]</span> Singh, A. et al. (2024). "RL Adaptive IPS." <span class="text-neutral-400 italic">IEEE Access</span>.</div>
+      <div class="p-2 rounded-lg" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.05)"><span class="text-white font-medium">[7]</span> Hassan, T. et al. (2023). "Hybrid ML IIoT IDS." <span class="text-neutral-400 italic">IEEE Access</span>.</div>
+      <div class="p-2 rounded-lg" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.05)"><span class="text-white font-medium">[8]</span> Chen, L. et al. (2024). "Transformer IDS." <span class="text-neutral-400 italic">IEEE TNNLS</span>.</div>
+      <div class="p-2 rounded-lg" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.05)"><span class="text-white font-medium">[9]</span> Mishra, P. et al. (2024). "Multi-Stage SCADA IDS." <span class="text-neutral-400 italic">IEEE IoT-J</span>.</div>
+      <div class="p-2 rounded-lg" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.05)"><span class="text-white font-medium">[10]</span> Al-Mashhadi, K. et al. (2025). "XAI for IIoT IDS." <span class="text-neutral-400 italic">IEEE Access</span>.</div>
+    </div>
+    <div class="text-[10px] text-neutral-300 leading-relaxed space-y-2">
+      <div class="p-2 rounded-lg" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.05)"><span class="text-white font-medium">[11]</span> Rossi, D. et al. (2025). "Zero-Day VAE IDS." <span class="text-neutral-400 italic">Elsevier Neurocomputing</span>.</div>
+      <div class="p-2 rounded-lg" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.05)"><span class="text-white font-medium">[12]</span> Chen, M. et al. (2025). "Adaptive IPS Manufacturing." <span class="text-neutral-400 italic">IEEE TII</span>.</div>
+      <div class="p-2 rounded-lg" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.05)"><span class="text-white font-medium">[13]</span> Das, A. et al. (2025). "Lightweight IIoT IDS." <span class="text-neutral-400 italic">IEEE IoT-J</span>.</div>
+      <div class="p-2 rounded-lg" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.05)"><span class="text-white font-medium">[14]</span> Wang, H. et al. (2025). "FTL IDS." <span class="text-neutral-400 italic">IEEE TIFS</span>.</div>
+      <div class="p-2 rounded-lg" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.05)"><span class="text-white font-medium">[15]</span> Gupta, S. et al. (2025). "Digital Twin IDS." <span class="text-neutral-400 italic">Springer JNCA</span>.</div>
+      <div class="p-2 rounded-lg" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.05)"><span class="text-white font-medium">[16]</span> Al-Turjman, F. et al. (2025). "Signature-ML Hybrid." <span class="text-neutral-400 italic">IEEE Access</span>.</div>
+      <div class="p-2 rounded-lg" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.05)"><span class="text-white font-medium">[17]</span> Liu, F. et al. (2008). "Isolation Forest." <span class="text-neutral-400 italic">IEEE ICDM</span>.</div>
+      <div class="p-2 rounded-lg" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.05)"><span class="text-white font-medium">[18]</span> Chen, T. & Guestrin, C. (2016). "XGBoost." <span class="text-neutral-400 italic">ACM SIGKDD</span>.</div>
+      <div class="p-2 rounded-lg" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.05)"><span class="text-white font-medium">[19]</span> Lundberg, S.M. & Lee, S.I. (2017). "SHAP." <span class="text-neutral-400 italic">NeurIPS</span>.</div>
+      <div class="p-2 rounded-lg" style="background:rgba(23,23,23,0.4);border:1px solid rgba(255,255,255,0.05)"><span class="text-white font-medium">[20]</span> Chawla, N.V. et al. (2002). "SMOTE." <span class="text-neutral-400 italic">JAIR</span>.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SLIDE 19: THANK YOU ============ -->
+<div class="slide grid-bg" id="slide-18">
+  <div class="glow-blob" style="top:50%;left:50%;transform:translate(-50%,-50%)"></div>
+  <div class="flex-1 flex flex-col justify-center items-center text-center relative z-10">
+    <div class="img-banner mb-8" style="width:100%;max-width:680px;height:160px"><img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=680&h=160&fit=crop&q=80" alt="Cybersecurity shield"><div class="overlay"><span class="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider">Securing the Future of Industrial IoT</span></div></div>
+    <div class="w-20 h-20 rounded-3xl bg-emerald-500/10 flex items-center justify-center mb-8 border border-emerald-500/20"><i data-lucide="shield-check" class="w-10 h-10 text-emerald-400"></i></div>
+    <h2 class="text-5xl font-semibold tracking-tight gradient-text mb-4">Thank You</h2>
+    <p class="text-lg text-neutral-300 mb-8">Questions & Discussion</p>
+    <div class="flex flex-wrap items-center justify-center gap-4 text-sm text-neutral-300">
+      <span class="flex items-center gap-2"><i data-lucide="building-2" class="w-4 h-4 text-emerald-400"></i>Atria Institute of Technology</span>
+      <span class="w-1 h-1 rounded-full bg-neutral-600"></span>
+      <span class="flex items-center gap-2"><i data-lucide="graduation-cap" class="w-4 h-4 text-emerald-400"></i>Dept. of CSD — VI Semester</span>
+      <span class="w-1 h-1 rounded-full bg-neutral-600"></span>
+      <span class="flex items-center gap-2"><i data-lucide="calendar" class="w-4 h-4 text-emerald-400"></i>March 2026</span>
+    </div>
+    <div class="mt-10 criteria-tag bg-emerald-500/8 border border-emerald-500/20 text-emerald-400">BCS685 — Major Project Phase-1 Review</div>
+  </div>
+</div>
+
+<script>
+lucide.createIcons();
+const slides=document.querySelectorAll('.slide'),totalSlides=slides.length;let currentSlide=0;
+const navDotsContainer=document.getElementById('navDots');
+for(let i=0;i<totalSlides;i++){const d=document.createElement('div');d.className=`nav-dot ${i===0?'active':''}`;d.onclick=()=>goToSlide(i);navDotsContainer.appendChild(d)}
+function updateSlide(){slides.forEach((s,i)=>s.classList.toggle('active',i===currentSlide));document.querySelectorAll('.nav-dot').forEach((d,i)=>d.classList.toggle('active',i===currentSlide));document.getElementById('slideCounter').textContent=`${currentSlide+1}/${totalSlides}`;document.getElementById('progressFill').style.width=`${((currentSlide+1)/totalSlides)*100}%`;lucide.createIcons()}
+function nextSlide(){if(currentSlide<totalSlides-1){currentSlide++;updateSlide()}}
+function prevSlide(){if(currentSlide>0){currentSlide--;updateSlide()}}
+function goToSlide(i){currentSlide=i;updateSlide()}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();nextSlide()}if(e.key==='ArrowLeft'){e.preventDefault();prevSlide()}if(e.key==='Home'){e.preventDefault();goToSlide(0)}if(e.key==='End'){e.preventDefault();goToSlide(totalSlides-1)}});
+let touchStartX=0;document.addEventListener('touchstart',e=>{touchStartX=e.changedTouches[0].screenX});document.addEventListener('touchend',e=>{const diff=touchStartX-e.changedTouches[0].screenX;if(Math.abs(diff)>50){diff>0?nextSlide():prevSlide()}});
+</script>
+</body>
+</html>
